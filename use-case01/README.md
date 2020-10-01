@@ -20,6 +20,27 @@ This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App 
 - BIG-IP AWAF already installed
 - CIS Installed (You may follow the instruction [here](https://clouddocs.f5.com/containers/v2/openshift/kctlr-openshift-app-install.html#install-kctlr-openshift) to install the BIG-IP Controller for OpenShift.)
 
+The example below shows the basic config parameters we used for this demo to run the BIG-IP Controller in OpenShift:
+```
+args: [
+            "--bigip-username=$(BIGIP_USERNAME)",
+            "--bigip-password=$(BIGIP_PASSWORD)",
+            "--bigip-url=https://20.0.1.72:8443",
+            "--insecure=true",
+            "--bigip-partition=ocp",
+            "--namespace=devsecops",
+            "--manage-routes=true",
+            "--route-vserver-addr=20.0.1.72",
+            "--route-http-vserver=devsecops_http_vs",
+            "--route-https-vserver=devsecops_https_vs",
+            "--override-as3-declaration=default/f5-override-as3-declaration",
+            "--agent=as3",
+            "--pool-member-type=cluster",
+            "--openshift-sdn-name=/Common/ocp-tunnel"
+          ]
+```
+
+
 ### Demo diagram
 ![](images/sre_usecase01-2.png)
 
@@ -333,10 +354,17 @@ data:
 ---
 ```
 
+```
+oc create -f dvwa-nap-config.yaml
+```
+
+
 *Configuring Routemap* 
 You have to replace 'your_app_domain_here' by your real application domain.
 
 ```
+dvwa-route-nap.yaml
+
 ##################################################################################################
 # DVWA01 Route
 ##################################################################################################
@@ -400,6 +428,34 @@ spec:
       name: dvwa02
 ```
 
+```
+oc create -f dvwa-route-nap.yaml
+```
+
+
 ### Configuring AWAF 
+
+F5 AWAF(Advanced WAF) is the leading WAF solution in the application security market and it has number of different advanced features to protect the applications against sophiscated Layer-7 level attack. A security policies of the AWAF has to protect backend applications properly but at the same time, it must ensure the legitimate user traffic access to the backend resources without issue. Sounds simple but it is not easy to configure the right security policies to achieve both goals sames time. In this use-case, we configure the AWAF policy for demo purpose only. YOu should not follow below configuring process to create your AWAF policy in your production network. You can find the best practice for AWAF policy creation from [here.](https://support.f5.com/csp/article/K74535942) 
+
+1. Login to AWAF GUI, Go to 'Security' -> 'Application Security' -> 'Security Policies' -> 'Create'
+![](images/sre_usecase01_awaf_2.png)
+
+2. Click the security policy you just created (SRE_DEVSEC_01)
+![](images/sre_usecase01_awaf_3.png)
+
+- Click the 'View Learning and Blocking Settings' under the 'Enforcement Mode' menu
+
+3. Expand 'Attack Signatures' and Click 'Change' menu
+![](images/sre_usecase01_awaf_4.png)
+
+- Apply the check box like the below.
+![](images/sre_usecase01_awaf_5.png)
+
+- 'Close', 'Save' and 'Apply Policy' 
+
+4. Apply the policy to the virtual server
+Please make sure that you're on OCP partition.
+- 'Local Traffic' -> 'Virtual Servers' -> 'devsecops_http_vs' -> Security -> Policies
+![](images/sre_usecase01_awaf_7.png)
 
 ### Simulating the Attack
