@@ -458,4 +458,166 @@ Please make sure that you're on OCP partition.
 - 'Local Traffic' -> 'Virtual Servers' -> 'devsecops_http_vs' -> Security -> Policies
 ![](images/sre_usecase01_awaf_7.png)
 
+5. Configuring custom blocking page for AWAF
+- Click the security policy you created (SRE_DEVSEC_01)
+- 'Response and Blocking page' -> 'Blocking page default' -> 'Custom response' -> 'Response Body'
+```
+<html><head><title>Request Rejected</title></head><body>The requested URL was rejected. Please consult with your administrator.<br><br>Your support ID is: <%TS.request.ID()%><br><br><a href='javascript:history.back();'>[Go Back]</a></body></html>
+```
+
+### Configuring ELK integration 
+*AWAF Logging Profile config*
+![](images/sre_usecase01_elk.png)
+
+*Logstash Config Example*
+
+```
+logstash.conf
+
+input {
+    syslog {
+        port => 5003
+        type => f5elk
+        }
+}
+
+filter {
+if [type] == "f5elk" {
+        
+        grok {
+            match => {
+                "message" => [
+                ",attack_type=\"%{DATA:attack_type}\"",
+                ",blocking_exception_reason=\"%{DATA:blocking_exception_reason}\"",
+                ",date_time=\"%{DATA:date_time}\"",
+                ",dest_port=\"%{DATA:dest_port}\"",
+                ",ip_client=\"%{DATA:ip_client}\"",
+                ",is_truncated=\"%{DATA:is_truncated}\"",
+                ",method=\"%{DATA:method}\"",
+                ",policy_name=\"%{DATA:policy_name}\"",
+                ",protocol=\"%{DATA:protocol}\"",
+                ",request_status=\"%{DATA:request_status}\"",
+                ",response_code=\"%{DATA:response_code}\"",
+                ",severity=\"%{DATA:severity}\"",
+                ",sig_cves=\"%{DATA:sig_cves}\"",
+                ",sig_ids=\"%{DATA:sig_ids}\"",
+                ",sig_names=\"%{DATA:sig_names}\"",
+                ",sig_set_names=\"%{DATA:sig_set_names}\"",
+                ",src_port=\"%{DATA:src_port}\"",
+                ",sub_violations=\"%{DATA:sub_violations}\"",
+                ",support_id=\"%{DATA:support_id}\"",
+                ",unit_hostname=\"%{DATA:unit_hostname}\"",
+                ",uri=\"%{DATA:uri}\"",
+                ",violation_rating=\"%{DATA:violation_rating}\"",
+                ",vs_name=\"%{DATA:vs_name}\"",
+                ",x_forwarded_for_header_value=\"%{DATA:x_forwarded_for_header_value}\"",
+                ",outcome=\"%{DATA:outcome}\"",
+                ",outcome_reason=\"%{DATA:outcome_reason}\"",
+                ",violations=\"%{DATA:violations}\"",
+                ",violation_details=\"%{DATA:violation_details}\"",
+                ",request=\"%{DATA:request}\""
+                ]
+        }
+    break_on_match => false
+  }
+  
+        mutate {
+        split => { "attack_type" => "," }
+        split => { "sig_ids" => "," }
+        split => { "sig_names" => "," }
+        split => { "sig_cves" => "," }
+        split => { "staged_sig_ids" => "," }
+        split => { "staged_sig_names" => "," }
+        split => { "staged_sig_cves" => "," }
+        split => { "sig_set_names" => "," }
+        split => { "threat_campaign_names" => "," }
+        split => { "staged_threat_campaign_names" => "," }
+        split => { "violations" => "," }
+        split => { "sub_violations" => "," }
+  
+        remove_field => [ "date_time", "message" ]
+        }
+
+        if [x_forwarded_for_header_value] != "N/A" {
+                mutate { add_field => { "source_host" => "%{x_forwarded_for_header_value}"}}
+                } else {
+                        mutate { add_field => { "source_host" => "%{ip_client}"}}
+                }
+  
+   geoip {
+    source => "source_host"
+    database => "/etc/logstash/GeoLite2-City.mmdb"
+}
+}
+}
+
+output {
+if [type] == 'f5elk' {
+         elasticsearch {
+                hosts => ["127.0.0.1:9200"]
+                index => "f5elk-%{+YYYY.MM.dd}"
+        }
+}
+}
+```
+
+*Example ELK Output*
+![](images/sre_usecase01_elk_02.png)
+
+*Apply Logging profile to VS*
+- 'Local Traffic' -> 'Virtual Servers' -> 'devsecops_http_vs' -> Security -> Policies
+![](images/sre_usecase01_elk_03.png)
+
 ### Simulating the Attack
+Login to Application 01 and 02. (ID:admin / PW:password)
+
+1. Command Injection Attack
+![](images/sre_usecase01_attack_01.png)
+
+```
+8.8.8.8; cat /etc/passwd
+```
+
+You should be able to see the blocking page of AWAF. 
+![](images/sre_usecase01_attack_02.png)
+
+2. SQL Injection
+![](images/sre_usecase01_attack_03.png)
+
+```
+%' and 1=0 union select null, concat(user,':',password) from users #
+```
+
+You should be able to see the blocking page of AWAF. 
+![](images/sre_usecase01_attack_02.png)
+
+3. Cross Site Scripting (XSS)
+![](images/sre_usecase01_attack_04.png)
+
+```
+<script>alert(document.cookie)</script>
+```
+
+You should be able to see the blocking page of AWAF. 
+![](images/sre_usecase01_attack_02.png)
+
+4. File Access
+1) Access to App01 on the browser with URL -> "http://your_app_domain.com/hackable/uploads/"
+   - You should be able to see two files - 'F5_Networks.jpg' and 'NGINX.pdf'
+   - Click both files. 
+   - You should be able to see the blocking page of NGINX when you click the 'pdf' file.
+
+   ![](images/sre_usecase01_attack_05.png)
+
+2) Access to App02 on the browser with URL -> "http://your_app_domain.com/hackable/uploads/"
+   - You should be able to see two files - 'F5_Networks.jpg' and 'NGINX.pdf'
+   - Click both files. 
+   - You should be able to see the blocking page of NGINX when you click the 'jpg' file.
+
+   ![](images/sre_usecase01_attack_06.png)
+
+
+
+
+
+
