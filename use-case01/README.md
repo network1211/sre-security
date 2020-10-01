@@ -1,12 +1,10 @@
 # Getting Started
 
 ## Summary
-In a organization who has enough maturity in terms of both cybersecurity and modern app architecture, enterprises runs two different cyber security teams to operate the more advanced security policies for the company. NetSecOps and DevSecOps are two different cyebrsecurity teams in a organization and they have different security requirements. NetSecOps normally wants to have a ‘Standardize Application Security’ and they want to block commonly used attack types with high-confidence, meaning that ‘low-false positive rate’, at the network level. And OWASP Top 10 threats could be a good example here.
-But for DevSecOps, they need to have the application-specific security policies which meet the requirements from different types of applications in OpenShift. 
-Since DevSecOps understands how their applications work, they want to apply different security policies for their backend applications. 
+In an organization with enough maturity in terms of cybersecurity and modern app architecture, enterprises run two different cybersecurity teams to operate the more advanced security policies for the company. NetSecOps and DevSecOps are two other cybersecurity teams in an organization, and they have different security requirements. NetSecOps typically wants to have a ‘Standardized Application Security,’ and they want to block commonly used attack types with high-confidence, meaning that ‘low-false positive rate,’ at the network level. And OWASP Top 10 threats could be a good example here. But for DevSecOps, they want to have the application-specific security policies for different types of applications in OpenShift. Since DevSecOps understands how their applications work, they want to apply different security policies for their backend applications.
 
 ## Use Case Scenario
-This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App Protect) to provide the advanced application security policies for NetSecOps and DevSecOps in a OpenShift environment. In this demo, we suppose that NetSecOps wants to block OWASP Top 10 threats while DevSecOps wants to have different 'file accessing' policy for each backend applications. Below is the table for each team's requirements. 
+This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App Protect) to provide the advanced application security policies for NetSecOps and DevSecOps in OpenShift environment. In this demo, we suppose that NetSecOps wants to block OWASP Top 10 threats while DevSecOps intends to have a different 'file accessing' policy for each backend application. Below is the table for each team's requirements.  
 ![](images/sre_usecase01-1.png)
 
 
@@ -48,7 +46,7 @@ args: [
 - You have to complete this step first -> [here].(https://github.com/network1211/f5-security-automation-ansible/blob/master/devsecops/malicious_pod/nap_create/README.md)
 
 *Install DVWA applications with NAP protection* 
-Below file will install two DVWA applications with NAP as a proxy mode. You have to replace 'your_nap_image_path' by your NAP container image path. 
+The below file will install two DVWA applications with NAP as a proxy mode. You have to replace 'your_nap_image_path' by your NAP container image path. 
 
 ```
 dvwa-nap-deployment.yaml 
@@ -184,8 +182,8 @@ spec:
 oc create -f dvwa-nap-deployment.yaml
 ```
 
-*Configuring NAP policies with COnfigmap*
-Below config file incluudes two different NAP policies for different 'file accessing' policies and custom blocking page. You have to replace 'your_elk_ip_here' by your real ELK server IP address.
+*Configuring NAP policies with Configmap*
+The below file includes two different NAP policies for different 'file accessing' policies and custom blocking page. You have to replace 'your_elk_ip_here' with your real ELK server IP address.
 
 ```
 dvwa-nap-config.yaml
@@ -360,7 +358,7 @@ oc create -f dvwa-nap-config.yaml
 
 
 *Configuring Routemap* 
-You have to replace 'your_app_domain_here' by your real application domain.
+You have to replace 'your_app_domain_here' with your real application domain.
 
 ```
 dvwa-route-nap.yaml
@@ -435,7 +433,7 @@ oc create -f dvwa-route-nap.yaml
 
 ### Configuring AWAF 
 
-F5 AWAF(Advanced WAF) is the leading WAF solution in the application security market and it has number of different advanced features to protect the applications against sophiscated Layer-7 level attack. A security policies of the AWAF has to protect backend applications properly but at the same time, it must ensure the legitimate user traffic access to the backend resources without issue. Sounds simple but it is not easy to configure the right security policies to achieve both goals sames time. In this use-case, we configure the AWAF policy for demo purpose only. YOu should not follow below configuring process to create your AWAF policy in your production network. You can find the best practice for AWAF policy creation from [here.](https://support.f5.com/csp/article/K74535942) 
+F5 AWAF(Advanced WAF) is the leading WAF solution in the application security market, and it has many different advanced features to protect the applications against a sophisticated Layer-7 level attack. The security policy of the AWAF has to protect backend applications correctly, but at the same time, it must ensure the legitimate user traffic access to the backend resources without issue. It sounds simple, but it is not easy to configure the right security policies to achieve both goals simultaneously. In this use-case, we configure the AWAF policy for demo purposes only. You should not follow the configuration process in this demo to create your AWAF policy in your production network. You can find the best practice for AWAF policy creation from [here.](https://support.f5.com/csp/article/K74535942) 
 
 1. Login to AWAF GUI, Go to 'Security' -> 'Application Security' -> 'Security Policies' -> 'Create'
 ![](images/sre_usecase01_awaf_2.png)
