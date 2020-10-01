@@ -6,7 +6,8 @@ But for DevSecOps, they need to have the application-specific security policies 
 Since DevSecOps understands how their applications work, they want to apply different security policies for their backend applications. 
 
 ## Use Case Scenario
-This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App Protect) to provide the advanced application security policies for NetSecOps and DevSecOps in a OpenShift environment.
+This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App Protect) to provide the advanced application security policies for NetSecOps and DevSecOps in a OpenShift environment. In this demo, we suppose that NetSecOps wants to block OWASP Top 10 threats while DevSecOps wants to have different 'file accessing' policy for each backend applications. Below is the table for each team's requirements. 
+![](images/sre_usecase01-1.png)
 
 
 ## Configuration Steps
@@ -16,6 +17,7 @@ This use case demonstrates how organizations position F5 AWAF and NAP(NGINX App 
 - BIG-IP AWAF already installed
 
 ### Demo diagram
+![](images/sre_usecase01-2.png)
 
 ### Install NAP(NGINX App Protect) 
 
